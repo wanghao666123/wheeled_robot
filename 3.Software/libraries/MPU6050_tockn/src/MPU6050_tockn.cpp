@@ -14,16 +14,24 @@ MPU6050::MPU6050(TwoWire &w, float aC, float gC){
 }
 
 void MPU6050::begin(){
+  //!设置采样率
   writeMPU6050(MPU6050_SMPLRT_DIV, 0x00);
   writeMPU6050(MPU6050_CONFIG, 0x00);
+  //!设置gyro的量程是500度/s
   writeMPU6050(MPU6050_GYRO_CONFIG, 0x08);
+  //!设置acc的量程是2g
   writeMPU6050(MPU6050_ACCEL_CONFIG, 0x00);
+  //!设置mpu6050的时钟源
   writeMPU6050(MPU6050_PWR_MGMT_1, 0x01);
+  //!更新绕x轴，绕y轴，绕z轴的角度
   this->update();
+
   angleGyroX = 0;
   angleGyroY = 0;
+  //!加速度得到的绕x轴，y轴的角度
   angleX = this->getAccAngleX();
   angleY = this->getAccAngleY();
+  //!又更新一次？
   preInterval = millis();
 }
 
@@ -98,7 +106,7 @@ void MPU6050::update(){
 	wire->write(0x3B);
 	wire->endTransmission(false);
 	wire->requestFrom((int)MPU6050_ADDR, 14);
-
+  //!读取mpu6050的三轴原始加速度，三轴原始角速度，温度
   rawAccX = wire->read() << 8 | wire->read();
   rawAccY = wire->read() << 8 | wire->read();
   rawAccZ = wire->read() << 8 | wire->read();
@@ -112,28 +120,32 @@ void MPU6050::update(){
   accX = ((float)rawAccX) / 16384.0;
   accY = ((float)rawAccY) / 16384.0;
   accZ = ((float)rawAccZ) / 16384.0;
-
+  //!绕x，y轴，弧度换算成角度
   angleAccX = atan2(accY, accZ + abs(accX)) * 360 / 2.0 / PI;
   angleAccY = atan2(accX, accZ + abs(accY)) * 360 / -2.0 / PI;
 
   gyroX = ((float)rawGyroX) / 65.5;
   gyroY = ((float)rawGyroY) / 65.5;
   gyroZ = ((float)rawGyroZ) / 65.5;
-
+  //!消除静止偏差
   gyroX -= gyroXoffset;
   gyroY -= gyroYoffset;
   gyroZ -= gyroZoffset;
 
+  //!计算读取原始加速度，角速度，温度的一次循环时间
   interval = (millis() - preInterval) * 0.001;
-
+  //!基于陀螺仪数据更新角度
   angleGyroX += gyroX * interval;
   angleGyroY += gyroY * interval;
   angleGyroZ += gyroZ * interval;
 
+  //!accCoef = 0.02f;
+  //!gyroCoef = 0.98f;
+  //!互补滤波
   angleX = (gyroCoef * (angleX + gyroX * interval)) + (accCoef * angleAccX);
   angleY = (gyroCoef * (angleY + gyroY * interval)) + (accCoef * angleAccY);
   angleZ = angleGyroZ;
-
+  //!更新上一次时间
   preInterval = millis();
 
 }
