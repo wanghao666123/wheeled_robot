@@ -1,3 +1,7 @@
 {
-    "arduino.path": "/home/wh/Downloads/arduino-ide_2.3.4_Linux_64bit/"
+    "arduino.path": "/home/wh/Downloads/arduino-ide_2.3.4_Linux_64bit/",
+    "files.associations": {
+        "*.ipp": "cpp",
+        "*.tcc": "cpp"
+    }
 }

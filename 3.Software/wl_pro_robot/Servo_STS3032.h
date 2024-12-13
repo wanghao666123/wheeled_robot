@@ -43,7 +43,7 @@ typedef	long s32;
 
 //内存表定义
 #define SMS_STS_ACC 41
-#define INST_SYNC_WRITE 0x83
+#define INST_SYNC_WRITE 0x83 //!表示同步写指令
 
 //飞特串行舵机通信层协议程序
 class SCS{
@@ -56,6 +56,7 @@ public:
 	u8 Level;//舵机返回等级
 	u8 End;//处理器大小端结构
 	u8 Error;//舵机状态
+	//!下面这些变量都没用到  begin
 	u8 syncReadRxPacketIndex;
 	u8 syncReadRxPacketLen;
 	u8 *syncReadRxPacket;
@@ -63,15 +64,16 @@ public:
 	u16 syncReadRxBuffLen;
 	u16 syncReadRxBuffMax;
 	u32 syncTimeOut;
+	//!-------------------end
 protected:
-	virtual int writeSCS(unsigned char *nDat, int nLen) = 0;
+	virtual int writeSCS(unsigned char *nDat, int nLen) = 0;  //!该函数成为纯虚函数，表示该函数在基类中没有具体实现，必须由派生类实现。
 	virtual int writeSCS(unsigned char bDat) = 0;
 	virtual void rFlushSCS() = 0;
 	virtual void wFlushSCS() = 0;
 protected:
 	void Host2SCS(u8 *DataL, u8* DataH, u16 Data);//1个16位数拆分为2个8位数
-	int	Ack(u8 ID);//返回应答
-	int checkHead();//帧头检测
+	int	Ack(u8 ID);//返回应答  没有用到
+	int checkHead();//帧头检测   没有用到
 };
 
 //飞特串行舵机硬件接口层程序

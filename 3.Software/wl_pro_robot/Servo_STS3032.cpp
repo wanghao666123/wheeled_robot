@@ -57,9 +57,11 @@ void SCS::Host2SCS(u8 *DataL, u8* DataH, u16 Data)
 }
 //同步写指令
 //舵机ID[]数组，IDN数组长度，MemAddr内存表地址，写入数据，写入长度
+//!IDN实际上是舵机数量
 void SCS::syncWrite(u8 ID[], u8 IDN, u8 MemAddr, u8 *nDat, u8 nLen)
 {
 	rFlushSCS();
+	//!(nLen+1)*IDN：每个舵机需要的数据长度，加上 1 字节的舵机 ID，总长度乘以舵机数量,+4：额外的 4 字节固定数据，包括指令帧头和校验信息。
 	u8 mesLen = ((nLen+1)*IDN+4);
 	u8 Sum = 0;
 	u8 bBuf[7];
@@ -113,6 +115,7 @@ int SCSerial::writeSCS(unsigned char bDat)
 {
 	return pSerial->write(&bDat, 1);
 }
+//!只要 read() 的返回值不是 -1，就继续读取，直到缓冲区为空。
 void SCSerial::rFlushSCS()
 {
 	while(pSerial->read()!=-1);
@@ -127,8 +130,8 @@ void SMS_STS::SyncWritePosEx(u8 ID[], u8 IDN, s16 Position[], u16 Speed[], u8 AC
     u8 offbuf[7*IDN];
     for(u8 i = 0; i<IDN; i++){
 		if(Position[i]<0){
-			Position[i] = -Position[i];
-			Position[i] |= (1<<15);
+			Position[i] = -Position[i];//!取绝对值
+			Position[i] |= (1<<15);//!设置第15位（最高位）为1
 		}
 		u16 V;
 		if(Speed){

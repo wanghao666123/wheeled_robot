@@ -31,7 +31,7 @@ void MPU6050::begin(){
   //!加速度得到的绕x轴，y轴的角度
   angleX = this->getAccAngleX();
   angleY = this->getAccAngleY();
-  //!又更新一次？
+  //?又更新一次？
   preInterval = millis();
 }
 
@@ -56,7 +56,7 @@ void MPU6050::setGyroOffsets(float x, float y, float z){
   gyroYoffset = y;
   gyroZoffset = z;
 }
-
+//!bool console = false, uint16_t delayBefore = 1000, uint16_t delayAfter = 3000
 void MPU6050::calcGyroOffsets(bool console, uint16_t delayBefore, uint16_t delayAfter){
 	float x = 0, y = 0, z = 0;
 	int16_t rx, ry, rz;
@@ -73,7 +73,7 @@ void MPU6050::calcGyroOffsets(bool console, uint16_t delayBefore, uint16_t delay
       Serial.print(".");
     }
     wire->beginTransmission(MPU6050_ADDR);
-    wire->write(0x43);
+    wire->write(0x43);//!这些寄存器存储了最近的陀螺仪测量值
     wire->endTransmission(false);
     wire->requestFrom((int)MPU6050_ADDR, 6);
 
@@ -85,6 +85,7 @@ void MPU6050::calcGyroOffsets(bool console, uint16_t delayBefore, uint16_t delay
     y += ((float)ry) / 65.5;
     z += ((float)rz) / 65.5;
   }
+  //!计算陀螺仪零偏值
   gyroXoffset = x / 3000;
   gyroYoffset = y / 3000;
   gyroZoffset = z / 3000;
