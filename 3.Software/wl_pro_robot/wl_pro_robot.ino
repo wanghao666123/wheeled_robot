@@ -40,6 +40,7 @@
 /************实例定义*************/
 
 //电机实例
+//!极对数为7
 BLDCMotor motor1 = BLDCMotor(7);
 BLDCMotor motor2 = BLDCMotor(7);
 BLDCDriver3PWM driver1 = BLDCDriver3PWM(32,33,25,22);
@@ -63,7 +64,7 @@ PIDController pid_zeropoint {.P = 0.002,.I = 0,   .D = 0, .ramp = 100000, .limit
 PIDController pid_roll_angle{.P = 8,    .I = 0,   .D = 0, .ramp = 100000, .limit = 450};
 
 //低通滤波器实例
-LowPassFilter lpf_joyy{.Tf = 0.2};
+LowPassFilter lpf_joyy{.Tf = 0.2};//!对与 joyy 相关的输入信号（如摇杆的 Y 轴值）进行平滑处理
 LowPassFilter lpf_zeropoint{.Tf = 0.1};
 LowPassFilter lpf_roll{.Tf = 0.3};
 
@@ -88,7 +89,7 @@ void lpfRoll(char* cmd)       { command.lpf(&lpf_roll, cmd);      }
 //WebServer实例
 WebServer webserver; // server服务器
 WebSocketsServer websocket = WebSocketsServer(81); // 定义一个webSocket服务器来处理客户发送的消息
-RobotProtocol rp(20);
+RobotProtocol rp(20);//!定义一个_now_buf，_old_buf
 int joystick_value[2];
 
 //STS舵机实例
@@ -218,7 +219,7 @@ void setup() {
   //连接motor对象与驱动器对象
   motor1.linkDriver(&driver1);
   motor2.linkDriver(&driver2);
-
+  //!扭矩控制类型设置为 电压控制  运动控制模式设置为 扭矩控制模式
   motor1.torque_controller = TorqueControlType::voltage;
   motor2.torque_controller = TorqueControlType::voltage;   
   motor1.controller = MotionControlType::torque;
@@ -258,7 +259,7 @@ void loop() {
   bat_check();        //电压检测
   web_loop();         //Web数据更新
   mpu6050.update();   //IMU数据更新
-  lqr_balance_loop(); //lqr自平衡控制
+  lqr_balance_loop(); //lqr自平衡控制？？？
   yaw_loop();         //yaw轴转向控制
   leg_loop();         //腿部动作控制
   
@@ -458,7 +459,7 @@ void jump_loop(){
 void yaw_loop(){
   //YAW_output = 0.03*(YAW_Kp*YAW_angle_total + YAW_Kd*YAW_gyro);
   yaw_angle_addup();
-  
+  //!根据摇杆（wrobot.joyx）的输入来调整 YAW_angle_total，并且通过 0.002 的乘数来调节每次增量的大小
   YAW_angle_total += wrobot.joyx*0.002;
   float yaw_angle_control = pid_yaw_angle(YAW_angle_total);
   float yaw_gyro_control  = pid_yaw_gyro(YAW_gyro);
@@ -477,23 +478,23 @@ void yaw_angle_addup() {
   YAW_angle  = (float)mpu6050.getAngleZ();;
   YAW_gyro   = (float)mpu6050.getGyroZ();
 
-  if(YAW_angle_zero_point == (-10))
+  if(YAW_angle_zero_point == (-10))//!没有用到？
   {
     YAW_angle_zero_point = YAW_angle;
   }
 
   float yaw_angle_1,yaw_angle_2,yaw_addup_angle;
-  if(YAW_angle > YAW_angle_last)
+  if(YAW_angle > YAW_angle_last)//!顺时针
   {
     yaw_angle_1 = YAW_angle - YAW_angle_last;
-    yaw_angle_2 = YAW_angle - YAW_angle_last - 2*PI;
+    yaw_angle_2 = YAW_angle - YAW_angle_last - 2*PI;//!如果角度变化较大，可能绕过了 2π
   }
-  else
+  else//!逆时针
   {
     yaw_angle_1 = YAW_angle - YAW_angle_last;
     yaw_angle_2 = YAW_angle - YAW_angle_last + 2*PI;
   }
-
+  //!选择最小的角度差
   if(abs(yaw_angle_1)>abs(yaw_angle_2))
   {
     yaw_addup_angle=yaw_angle_2;
@@ -502,7 +503,7 @@ void yaw_angle_addup() {
   {
     yaw_addup_angle=yaw_angle_1;
   }
-
+  //! 更新累积角度和上一个角度
   YAW_angle_total = YAW_angle_total + yaw_addup_angle;
   YAW_angle_last = YAW_angle;
 }
